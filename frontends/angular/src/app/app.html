@@ -1,0 +1,15 @@
+<h1>Taskflow9</h1>
+
+@if (health(); as api) {
+  <p>Connexion à l’API réussie.</p>
+
+  <ul>
+    <li>Application : {{ api.application }}</li>
+    <li>Backend : {{ api.backend }}</li>
+    <li>Statut : {{ api.status }}</li>
+  </ul>
+} @else if (error(); as message) {
+  <p>{{ message }}</p>
+} @else {
+  <p>Connexion à l’API en cours…</p>
+}

@@ -1,0 +1,49 @@
+name: taskflow9
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: infra/php/Dockerfile
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      COMPOSER_HOME: /tmp/composer
+    volumes:
+      - ./backends/symfony:/var/www/html
+
+  angular:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      HOME: /tmp
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+      NG_CLI_ANALYTICS: "false"
+    volumes:
+      - ./frontends/angular:/app
+    ports:
+      - "127.0.0.1:4200:4200"
+    command: npm start -- --host 0.0.0.0 --proxy-config proxy.conf.json
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./backends/symfony:/var/www/html:ro
+      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: taskflow
+      MYSQL_USER: taskflow
+      MYSQL_PASSWORD: taskflow_dev
+      MYSQL_ROOT_PASSWORD: root_dev
+    volumes:
+      - symfony_mysql_data:/var/lib/mysql
+
+volumes:
+  symfony_mysql_data:
